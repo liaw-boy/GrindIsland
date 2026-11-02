@@ -168,12 +168,14 @@ public final class LyricService: ObservableObject, @unchecked Sendable {
             if let screen = NSScreen.main {
                 let target = SyncTarget { [weak self] in self?.updateSync() }
                 let link = screen.displayLink(target: target, selector: #selector(SyncTarget.tick(_:)))
-                link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+                // Which line is current and how many characters are lit: 15 times a second is plenty (the collapsed
+                // sweep reads the live position itself, every frame it draws).
+                link.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 15, preferred: 15)
                 link.add(to: .main, forMode: .common)
                 self.syncTarget = target
                 self.syncLink = link
             } else {
-                self.syncTimer = Timer.commonModeTimer(interval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+                self.syncTimer = Timer.commonModeTimer(interval: 1.0 / 15.0, repeats: true) { [weak self] _ in
                     self?.updateSync()
                 }
             }

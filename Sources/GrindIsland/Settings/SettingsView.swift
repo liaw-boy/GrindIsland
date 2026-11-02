@@ -41,6 +41,7 @@ struct SettingsView: View {
     @State private var cachedCount = LyricCache.shared.count()
     @State private var modelsKnown = VolumeMonitor.knownModels.count
     @State private var confirmReset = false
+    @State private var autoUpdate = Updater.shared.automaticChecks
     @ObservedObject private var clip = ClipboardHistory.shared
     @Namespace private var sideNS
     private typealias K = IslandStyleKit
@@ -394,6 +395,9 @@ struct SettingsView: View {
         }
     }
 
+    /// Fixed links only (never built from input).
+    static func openLink(_ s: String) { if let u = URL(string: s) { NSWorkspace.shared.open(u) } }
+
     /// Clears this app's preferences (except the shelf list and earbud models, cleared above if wanted) and relaunches.
     static func resetAllSettings() {
         let domain = Bundle.main.bundleIdentifier ?? ProcessInfo.processInfo.processName
@@ -415,15 +419,29 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             card("GrindIsland") {
                 HStack { Text("版本"); Spacer(); Text(Self.version).monospacedDigit().foregroundColor(K.secondary) }
-                if Updater.shared.available {
+                HStack { Text("授權"); Spacer(); Text("MIT，開放原始碼").foregroundColor(K.secondary) }
+            }
+            if Updater.shared.available {
+                card("更新") {
+                    Toggle("每天自動檢查新版本", isOn: Binding(get: { autoUpdate }, set: { autoUpdate = $0; Updater.shared.automaticChecks = $0 }))
                     HStack {
-                        Text("每天自動檢查新版本，下載的更新會先驗證簽章才安裝。").font(.system(size: 11)).foregroundColor(K.secondary)
+                        Text(Updater.shared.lastCheck.map { "上次檢查：\($0.formatted(.dateTime.locale(Locale(identifier: "zh_Hant_TW")).month().day().hour().minute()))" } ?? "還沒檢查過")
+                            .font(.system(size: 11)).foregroundColor(K.secondary)
                         Spacer()
                         Button("檢查更新…") { Updater.shared.checkNow() }.buttonStyle(IslandButton())
                     }
+                    Text("新版本從 GitHub 下載，安裝前會先驗證簽章，確認是原作者發布的。")
+                        .font(.system(size: 11)).foregroundColor(K.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            hint("歌詞來源：網易雲音樂、LRCLIB。所有資料只存在這台 Mac。")
+            card("連結") {
+                HStack(spacing: 8) {
+                    Button("GitHub 專案頁") { Self.openLink("https://github.com/liaw-boy/GrindIsland") }.buttonStyle(IslandButton())
+                    Button("回報問題") { Self.openLink("https://github.com/liaw-boy/GrindIsland/issues") }.buttonStyle(IslandButton())
+                    Button("版本紀錄") { Self.openLink("https://github.com/liaw-boy/GrindIsland/releases") }.buttonStyle(IslandButton())
+                }
+            }
+            hint("會連網的只有：查歌詞（把歌名與歌手送到網易雲音樂或 LRCLIB）與檢查新版本（GitHub）。其他資料都只在這台 Mac，詳見「隱私」。")
         }
     }
 

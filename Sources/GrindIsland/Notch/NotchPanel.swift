@@ -99,6 +99,9 @@ public final class NotchPanel: NSPanel {
         _ = CursorAccess.allowInBackground
         let host = NotchHostingView(rootView: NotchRootView().environmentObject(geom))
         host.geom = geom
+        // The window has a fixed size: without this the hosting view recomputed its min/max size and constraints on
+        // every animation frame, which was most of the island's CPU while lyrics played.
+        host.sizingOptions = []
         self.contentView = host
 
         setupEventMonitors()
@@ -144,6 +147,7 @@ public final class NotchPanel: NSPanel {
 
     private func watchPointer(whileExpanded expanded: Bool) {
         DispatchQueue.main.async { HotKeys.shared.updateOpenKeys() }   // after the new value is set (this runs on willSet)
+        if expanded { AgentMonitor.shared.scan() }   // fresh token counts / titles, skipped while collapsed
         collapseTimer?.invalidate()
         collapseTimer = nil
         outsideSince = nil

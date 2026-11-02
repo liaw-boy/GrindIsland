@@ -168,3 +168,24 @@ final class TerminalJumpTests: XCTestCase {
         XCTAssertNil(AgentMonitor.validTTY("ttys1\" & do shell script \"x"), "injection")
     }
 }
+
+final class ProcessListTests: XCTestCase {
+    func testFindsProcessesByNameWithoutSpawningPs() {
+        let me = ProcessInfo.processInfo.processName
+        let found = AgentMonitor.processes(named: String(me.prefix(16)))
+        XCTAssertTrue(found.contains { $0.0 == ProcessInfo.processInfo.processIdentifier }, "finds this test process")
+        XCTAssertTrue(AgentMonitor.processes(named: "no-such-process-xyz").isEmpty)
+    }
+}
+
+final class SessionRedrawTests: XCTestCase {
+    func testTokenChangesOnlyCountWhenVisible() {
+        var a = LocalAgentSession(id: "s1", pid: 1, name: "demo", kind: "Claude Code", state: .working, cwd: "/tmp/demo", statusSince: Date(timeIntervalSince1970: 0))
+        var b = a
+        b.extra.tokens = 500
+        XCTAssertFalse(AgentMonitor.differs([a], [b], details: false), "collapsed: tokens alone are not worth a redraw")
+        XCTAssertTrue(AgentMonitor.differs([a], [b], details: true))
+        a.state = .waitingApproval
+        XCTAssertTrue(AgentMonitor.differs([a], [b], details: false), "a state change always is")
+    }
+}

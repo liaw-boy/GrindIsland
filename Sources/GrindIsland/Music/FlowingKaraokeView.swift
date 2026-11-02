@@ -98,7 +98,7 @@ public struct FlowingKaraokeView: View {
                 .opacity(0)
                 .frame(maxWidth: .infinity)
                 .overlay(alignment: .leading) {
-                    TimelineView(.periodic(from: .now, by: 1.0 / 60.0)) { timeline in
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in   // 30 fps: the sweep looks the same, half the work
                         let p = progressProvider?() ?? progress
                         let elapsed = timeline.date.timeIntervalSince(startDate)
                         let travel = textW + marqueeGap

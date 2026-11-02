@@ -66,7 +66,7 @@ public struct NotchRootView: View {
                     IslandOutline(notched: geom.notchStyle, flatTop: false, cornerRadius: radius)
                         .stroke(musicTracker.artworkTint, lineWidth: 1.4)
                         .shadow(color: musicTracker.artworkTint.opacity(0.7), radius: 7)
-                        .phaseAnimator([0.35, 0.85]) { rim, level in rim.opacity(level) } animation: { _ in .easeInOut(duration: 2.4) }
+                        .opacity(0.6)   // steady: a breathing rim redrew the whole island every frame
                         .allowsHitTesting(false)
                         .transition(.opacity)
                 }

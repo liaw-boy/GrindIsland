@@ -66,6 +66,7 @@ public final class MusicTracker: ObservableObject, @unchecked Sendable {
     private var playerInfoObserver: NSObjectProtocol?
     private var idleStreak = 0    // consecutive polls without a track (main thread)
     private var polling = false   // only touched on `queue`: skip a poll while one is still running
+    private var pollScript: NSAppleScript?   // only touched on `queue`
 
     /// Continuous playback position (main thread): the last polled position plus elapsed time, so
     /// lyrics and the progress bar advance smoothly between the 1s AppleScript polls.
@@ -138,7 +139,9 @@ public final class MusicTracker: ObservableObject, @unchecked Sendable {
             """
 
             var error: NSDictionary?
-            guard let appleScript = NSAppleScript(source: script) else { return }
+            // Compiled once and reused: compiling it on every poll (twice a second) was a steady CPU cost.
+            if self.pollScript == nil, let s = NSAppleScript(source: script), s.compileAndReturnError(&error) { self.pollScript = s }
+            guard let appleScript = self.pollScript else { return }
             let descriptor = appleScript.executeAndReturnError(&error)
             let result = descriptor.stringValue ?? "IDLE"
 

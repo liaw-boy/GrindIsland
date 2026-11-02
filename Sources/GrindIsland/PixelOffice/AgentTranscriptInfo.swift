@@ -37,13 +37,21 @@ final class AgentTranscriptReader: @unchecked Sendable {
             if let nl = data.lastIndex(of: 0x0A) {
                 c.carry = data.subdata(in: data.index(after: nl)..<data.endIndex)
                 data = data.subdata(in: data.startIndex..<nl)
-                for line in data.split(separator: 0x0A) { parse(Data(line), into: &c) }
+                // Only titles and assistant replies matter; tool output and user lines (often huge) are skipped
+                // before any JSON parsing.
+                for line in data.split(separator: 0x0A)
+                where line.range(of: Self.assistantMark) != nil || line.range(of: Self.titleMark) != nil {
+                    parse(Data(line), into: &c)
+                }
             } else { c.carry = data }
         }
         c.info.tokens = c.perMessage.values.reduce(0, +)
         cursors[sessionId] = c
         return c.info
     }
+
+    private static let assistantMark = Data("\"type\":\"assistant\"".utf8)
+    private static let titleMark = Data("\"ai-title\"".utf8)
 
     func forget(except live: Set<String>) { cursors = cursors.filter { live.contains($0.key) } }
 

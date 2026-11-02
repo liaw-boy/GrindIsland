@@ -17,4 +17,12 @@ final class Updater {
     }
 
     func checkNow() { controller?.checkForUpdates(nil) }
+
+    /// Sparkle's own daily check (stored by Sparkle in the app's preferences).
+    var automaticChecks: Bool {
+        get { controller?.updater.automaticallyChecksForUpdates ?? false }
+        set { controller?.updater.automaticallyChecksForUpdates = newValue }
+    }
+
+    var lastCheck: Date? { controller?.updater.lastUpdateCheckDate }
 }

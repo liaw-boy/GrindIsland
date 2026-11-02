@@ -193,7 +193,9 @@ public final class AgentMonitor: ObservableObject, @unchecked Sendable {
                 let finished = self.sessions.first { old in
                     old.state == .working && list.first(where: { $0.id == old.id }).map { $0.state != .working && $0.state != .waitingApproval } == true
                 }
-                if self.sessions != list { self.sessions = list }
+                // Collapsed, nothing shows token counts or the current tool: republishing for those (an active agent
+                // changes them every scan) redrew the whole island every 1.5 s for nothing.
+                if Self.differs(self.sessions, list, details: NotchGeometry.anyExpanded) { self.sessions = list }
                 self.priorityAlertSession = alert
                 for p in Self.answeredElsewhere(self.pendingApprovals, sessions: list) { self.resolve(p, .terminal) }
                 if var done = finished.flatMap({ f in list.first(where: { $0.id == f.id }) }) {
@@ -255,19 +257,8 @@ public final class AgentMonitor: ObservableObject, @unchecked Sendable {
     }
 
     private func scanAntigravity() -> [LocalAgentSession] {
-        guard let out = Self.run("/bin/ps", ["-axo", "pid=,lstart=,comm="]) else { return [] }
-        var pids: [(Int32, Date)] = []
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.dateFormat = "EEE MMM d HH:mm:ss yyyy"
-        for line in out.split(separator: "\n") {
-            let s = line.trimmingCharacters(in: .whitespaces)
-            guard s.hasSuffix("/agy") else { continue }
-            let parts = s.split(separator: " ", omittingEmptySubsequences: true)
-            guard parts.count >= 7, let pid = Int32(parts[0]) else { continue }
-            let dateStr = parts[1...5].joined(separator: " ")
-            pids.append((pid, fmt.date(from: dateStr) ?? Date()))
-        }
+        // Asked of the kernel directly (no `ps` process spawned every scan): processes named "agy" and their start.
+        let pids = Self.processes(named: "agy")
         if pids.isEmpty { return [] }
 
         // Most recent transcript write across all conversations → "is agy busy right now"
@@ -443,6 +434,32 @@ public final class AgentMonitor: ObservableObject, @unchecked Sendable {
                   let ppid = Int32(out.trimmingCharacters(in: .whitespacesAndNewlines)), ppid > 1 else { return }
             pid = ppid
         }
+    }
+
+    /// Whether the session list changed in a way worth redrawing for: always for who / what state, for the per-session
+    /// details (tokens, title, tool) only when they can be seen.
+    static func differs(_ a: [LocalAgentSession], _ b: [LocalAgentSession], details: Bool) -> Bool {
+        if details { return a != b }
+        func strip(_ l: [LocalAgentSession]) -> [LocalAgentSession] { l.map { var s = $0; s.extra = AgentExtraInfo(); return s } }
+        return strip(a) != strip(b)
+    }
+
+    /// Running processes with this exact name, with their start time.
+    static func processes(named name: String) -> [(Int32, Date)] {
+        var pids = [pid_t](repeating: 0, count: 8192)
+        let n = proc_listallpids(&pids, Int32(MemoryLayout<pid_t>.size * pids.count))
+        guard n > 0 else { return [] }
+        var out: [(Int32, Date)] = []
+        for pid in pids.prefix(Int(n)) where pid > 0 {
+            var buf = [CChar](repeating: 0, count: 64)
+            guard proc_name(pid, &buf, UInt32(buf.count)) > 0, String(cString: buf) == name else { continue }
+            var info = proc_bsdinfo()
+            let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+            let started = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size
+                ? Date(timeIntervalSince1970: TimeInterval(info.pbi_start_tvsec)) : Date()
+            out.append((pid, started))
+        }
+        return out
     }
 
     private static func run(_ path: String, _ args: [String]) -> String? {
