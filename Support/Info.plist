@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>GrindIsland</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.boywei.GrindIsland</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>GrindIsland</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSArchitecturePriority</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>GrindIsland 需要控制「音樂」（讀取播放資訊與歌詞、播放控制），以及「cmux」（點 Agent 卡片的箭頭時，跳到該 Agent 所在的終端機分頁）。</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>GrindIsland 在瀏海顯示你的行程與即將開始的會議，並可新增行程。</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>GrindIsland 在行事曆分頁顯示當天的提醒事項，並可將其標示為完成。</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/liaw-boy/GrindIsland/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>E5aQDPtwgDhUgjtolKx4NroZS+bIJvLUhXfocaNRNPg=</string>
+</dict>
+</plist>

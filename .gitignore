@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+.DS_Store
+GrindIsland.app/
+dist/
+graphify-out/
+/*.png
