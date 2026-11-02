@@ -25,6 +25,12 @@ ditto -c -k --keepParent dist/GrindIsland.app "dist/GrindIsland-$VERSION.zip"
 rm -rf dist/GrindIsland.app
 "$BIN/generate_appcast" --account GrindIsland \
     --download-url-prefix "https://github.com/$REPO/releases/download/v$VERSION/" dist
+# The prefix is applied to every version in dist/: point the older ones back at their own release.
+for z in dist/GrindIsland-*.zip; do
+    v=$(basename "$z" .zip | sed 's/^GrindIsland-//')
+    [ "$v" = "$VERSION" ] && continue
+    sed -i '' "s|/download/v$VERSION/GrindIsland-$v.zip|/download/v$v/GrindIsland-$v.zip|" dist/appcast.xml
+done
 echo
 echo "Ready in dist/. To publish (after review):"
 echo "  gh release create v$VERSION dist/GrindIsland-$VERSION.zip dist/appcast.xml --repo $REPO --title \"GrindIsland $VERSION\""
